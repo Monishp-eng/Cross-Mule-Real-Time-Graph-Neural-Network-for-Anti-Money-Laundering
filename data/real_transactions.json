@@ -1,0 +1,44 @@
+[
+  {
+    "channel": "MOBILE",
+    "raw_event": {
+      "event_id": "MOB_REAL_1001",
+      "user_id": "USER_2011",
+      "transfer_to_wallet": "wallet_red_001",
+      "transfer_amount": 1500,
+      "transfer_time": "2026-03-22T10:01:00Z",
+      "device_fingerprint": "dev_fp_aa921",
+      "ip_address": "103.44.22.10",
+      "location": {
+        "latitude": 12.9716,
+        "longitude": 77.5946,
+        "country": "IN"
+      }
+    }
+  },
+  {
+    "channel": "ATM",
+    "raw_event": {
+      "event_id": "ATM_REAL_1002",
+      "terminal_id": "ATM_BLR_118",
+      "card_number_last4": "7712",
+      "withdrawal_amount": 950,
+      "withdrawal_time": "2026-03-22T10:05:00Z",
+      "location": {
+        "latitude": 12.9489,
+        "longitude": 77.6167,
+        "country": "IN"
+      }
+    }
+  },
+  {
+    "channel": "UPI",
+    "raw_event": {
+      "upi_id": "user2011@oksbi",
+      "recipient_upi": "merchant881@icici",
+      "txn_amount": 4999,
+      "txn_ref_id": "UPI_REAL_1003",
+      "timestamp": "2026-03-22T10:07:45Z"
+    }
+  }
+]
