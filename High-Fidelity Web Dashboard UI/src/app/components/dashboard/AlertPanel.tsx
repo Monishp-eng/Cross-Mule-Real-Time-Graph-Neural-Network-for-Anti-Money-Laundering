@@ -1,11 +1,14 @@
 import { AlertTriangle, Eye } from 'lucide-react';
-import { mockAlerts } from '../../mockData';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { ScrollArea } from '../ui/scroll-area';
 import { motion } from 'motion/react';
+import { useAlerts } from '../../hooks/useData';
 
 export function AlertPanel() {
+  const { data: alerts, loading } = useAlerts();
+  const alertList = alerts ?? [];
+
   const getSeverityColor = (severity: string) => {
     const colors: Record<string, string> = {
       critical: 'bg-red-500/10 text-red-400 border-red-500/20',
@@ -25,12 +28,18 @@ export function AlertPanel() {
     return colors[status] || colors.new;
   };
 
+  const getTimestampMs = (ts: any): number => {
+    if (!ts) return Date.now();
+    if (ts instanceof Date) return ts.getTime();
+    return new Date(ts).getTime();
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.3 }}
-      className="bg-slate-900/50 backdrop-blur-xl rounded-xl border-2 border-slate-700/50 flex flex-col shadow-xl h-full"
+      className="bg-slate-900/50 backdrop-blur-xl rounded-xl border-2 border-slate-700/50 flex flex-col shadow-xl"
     >
       {/* Header */}
       <div className="p-6 border-b border-slate-700/50">
@@ -40,7 +49,7 @@ export function AlertPanel() {
             <p className="text-sm text-slate-400">Flagged mule clusters and suspicious activity</p>
           </div>
           <Badge className="bg-red-500/10 text-red-400 border-red-500/20">
-            {mockAlerts.filter(a => a.status === 'new').length} New
+            {alertList.filter(a => a.status === 'new').length} New
           </Badge>
         </div>
       </div>
@@ -48,7 +57,14 @@ export function AlertPanel() {
       {/* Alert list */}
       <ScrollArea className="flex-1 max-h-96">
         <div className="p-6 space-y-4">
-          {mockAlerts.map((alert, index) => (
+          {loading && alertList.length === 0 && (
+            <div className="space-y-3">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="h-24 rounded-lg bg-slate-800/30 animate-pulse" />
+              ))}
+            </div>
+          )}
+          {alertList.map((alert, index) => (
             <motion.div
               key={alert.id}
               initial={{ opacity: 0, x: -20 }}
@@ -82,7 +98,7 @@ export function AlertPanel() {
                         {alert.status}
                       </Badge>
                       <span className="text-xs text-slate-500">
-                        {Math.floor((Date.now() - alert.timestamp.getTime()) / 60000)}m ago
+                        {Math.floor((Date.now() - getTimestampMs(alert.timestamp)) / 60000)}m ago
                       </span>
                     </div>
                     <Button

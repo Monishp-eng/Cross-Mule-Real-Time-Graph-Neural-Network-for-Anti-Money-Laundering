@@ -1,23 +1,35 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { motion } from 'motion/react';
-import { Mail, Lock, Eye, EyeOff, Shield, ChevronRight } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Shield, ChevronRight, Loader2 } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
+import apiService from '../../services/api.service';
 
 export function LoginPage() {
   const navigate = useNavigate();
   const { theme } = useTheme();
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Mock authentication - in production, this would call your auth API
-    console.log('Login attempt:', formData);
-    navigate('/');
+    setLoading(true);
+    setError('');
+    try {
+      const data = await apiService.login({ email: formData.email, password: formData.password }) as any;
+      localStorage.setItem('auth_token', data.token);
+      localStorage.setItem('refresh_token', data.refreshToken);
+      navigate('/');
+    } catch (err: any) {
+      setError(err?.response?.data?.message || 'Invalid email or password');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const isDark = theme === 'dark';
@@ -72,8 +84,8 @@ export function LoginPage() {
 
         {/* Login form */}
         <div className={`relative backdrop-blur-xl rounded-2xl p-8 shadow-2xl ${
-          isDark 
-            ? 'bg-slate-900/50 border-2 border-slate-700/50' 
+          isDark
+            ? 'bg-slate-900/50 border-2 border-slate-700/50'
             : 'bg-white/80 border-2 border-slate-200'
         }`}>
           <h2 className={`text-2xl font-bold mb-6 ${
@@ -81,6 +93,12 @@ export function LoginPage() {
           }`}>
             Sign In
           </h2>
+
+          {error && (
+            <div className="mb-4 px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+              {error}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Email field */}
@@ -144,67 +162,27 @@ export function LoginPage() {
               </div>
             </div>
 
-            {/* Remember me and forgot password */}
-            <div className="flex items-center justify-between">
-              <label className="flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="w-4 h-4 rounded border-2 border-slate-700 bg-slate-800/50 text-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
-                />
-                <span className={`ml-2 text-sm ${
-                  isDark ? 'text-slate-400' : 'text-slate-600'
-                }`}>
-                  Remember me
-                </span>
-              </label>
-              <a href="#" className="text-sm text-cyan-400 hover:text-cyan-300 transition-colors">
-                Forgot password?
-              </a>
-            </div>
-
             {/* Submit button */}
             <motion.button
               type="submit"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="w-full py-3 px-4 rounded-lg bg-gradient-to-r from-cyan-500 to-purple-600 text-white font-semibold shadow-lg shadow-cyan-500/25 hover:shadow-xl hover:shadow-cyan-500/30 transition-all flex items-center justify-center gap-2"
+              disabled={loading}
+              whileHover={{ scale: loading ? 1 : 1.02 }}
+              whileTap={{ scale: loading ? 1 : 0.98 }}
+              className="w-full py-3 px-4 rounded-lg bg-gradient-to-r from-cyan-500 to-purple-600 text-white font-semibold shadow-lg shadow-cyan-500/25 hover:shadow-xl hover:shadow-cyan-500/30 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              Sign In
-              <ChevronRight className="w-5 h-5" />
+              {loading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Signing In...
+                </>
+              ) : (
+                <>
+                  Sign In
+                  <ChevronRight className="w-5 h-5" />
+                </>
+              )}
             </motion.button>
           </form>
-
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className={`absolute inset-0 flex items-center ${
-              isDark ? 'border-t border-slate-700' : 'border-t border-slate-300'
-            }`} />
-            <div className="relative flex justify-center text-sm">
-              <span className={`px-4 ${
-                isDark ? 'bg-slate-900/50 text-slate-400' : 'bg-white/80 text-slate-500'
-              }`}>
-                Or continue with
-              </span>
-            </div>
-          </div>
-
-          {/* Social login buttons */}
-          <div className="grid grid-cols-2 gap-3">
-            <button className={`py-3 px-4 rounded-lg border-2 font-medium transition-all hover:scale-105 ${
-              isDark
-                ? 'bg-slate-800/50 border-slate-700 text-slate-300 hover:border-slate-600'
-                : 'bg-white border-slate-300 text-slate-700 hover:border-slate-400'
-            }`}>
-              Google
-            </button>
-            <button className={`py-3 px-4 rounded-lg border-2 font-medium transition-all hover:scale-105 ${
-              isDark
-                ? 'bg-slate-800/50 border-slate-700 text-slate-300 hover:border-slate-600'
-                : 'bg-white border-slate-300 text-slate-700 hover:border-slate-400'
-            }`}>
-              GitHub
-            </button>
-          </div>
 
           {/* Sign up link */}
           <p className={`text-center mt-6 text-sm ${
@@ -224,7 +202,7 @@ export function LoginPage() {
         <p className={`text-center mt-6 text-sm ${
           isDark ? 'text-slate-500' : 'text-slate-500'
         }`}>
-          © 2024 MuleGuard AI. All rights reserved.
+          © 2025 MuleGuard AI. All rights reserved.
         </p>
       </motion.div>
     </div>

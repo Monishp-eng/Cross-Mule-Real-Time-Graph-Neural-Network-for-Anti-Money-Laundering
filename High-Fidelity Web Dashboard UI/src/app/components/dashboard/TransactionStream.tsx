@@ -1,28 +1,41 @@
 import { useEffect, useState } from 'react';
 import { ArrowRight, Circle } from 'lucide-react';
-import { mockTransactions } from '../../mockData';
 import { Transaction } from '../../types';
 import { Badge } from '../ui/badge';
 import { ScrollArea } from '../ui/scroll-area';
 import { motion, AnimatePresence } from 'motion/react';
+import { useLiveTransactions } from '../../hooks/useData';
 
 export function TransactionStream() {
-  const [transactions, setTransactions] = useState<Transaction[]>(mockTransactions.slice(0, 8));
+  const { data: liveData } = useLiveTransactions();
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [seeded, setSeeded] = useState(false);
 
+  // Seed initial list from API on first successful fetch
   useEffect(() => {
-    // Simulate real-time transaction updates
+    if (liveData && liveData.length > 0 && !seeded) {
+      const normalized = liveData.slice(0, 8).map(t => ({
+        ...t,
+        timestamp: t.timestamp instanceof Date ? t.timestamp : new Date(t.timestamp as any),
+      }));
+      setTransactions(normalized);
+      setSeeded(true);
+    }
+  }, [liveData, seeded]);
+
+  // Keep a live simulation running to show the stream feel
+  useEffect(() => {
     const interval = setInterval(() => {
       const newTxn: Transaction = {
         id: `TXN${Date.now()}`,
-        fromAccount: `ACC${Math.floor(Math.random() * 15) + 1}`.padStart(6, '0'),
-        toAccount: `ACC${Math.floor(Math.random() * 15) + 1}`.padStart(6, '0'),
+        fromAccount: `ACC${String(Math.floor(Math.random() * 10) + 1).padStart(4, '0')}`,
+        toAccount: `ACC${String(Math.floor(Math.random() * 10) + 1).padStart(4, '0')}`,
         amount: Math.floor(Math.random() * 50000) + 5000,
-        channel: ['UPI', 'ATM', 'Wallet', 'App', 'Web'][Math.floor(Math.random() * 5)] as any,
+        channel: (['UPI', 'ATM', 'Wallet', 'App', 'Web'] as const)[Math.floor(Math.random() * 5)],
         timestamp: new Date(),
         riskScore: Math.floor(Math.random() * 100),
         status: Math.random() > 0.7 ? 'flagged' : 'completed',
       };
-
       setTransactions(prev => [newTxn, ...prev.slice(0, 9)]);
     }, 3000);
 
@@ -71,7 +84,8 @@ export function TransactionStream() {
           <AnimatePresence>
             {transactions.map((txn, index) => {
               const risk = getRiskBadge(txn.riskScore);
-              
+              const ts = txn.timestamp instanceof Date ? txn.timestamp : new Date(txn.timestamp as any);
+
               return (
                 <motion.div
                   key={txn.id}
@@ -88,7 +102,7 @@ export function TransactionStream() {
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-slate-500">
-                        {txn.timestamp.toLocaleTimeString()}
+                        {ts.toLocaleTimeString()}
                       </span>
                       <Badge className={`text-xs px-2 py-0 ${getChannelColor(txn.channel)}`}>
                         {txn.channel}

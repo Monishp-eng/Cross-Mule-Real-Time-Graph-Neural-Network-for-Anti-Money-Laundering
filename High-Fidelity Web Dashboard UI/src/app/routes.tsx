@@ -10,6 +10,7 @@ import { LoginPage } from "./components/auth/LoginPage";
 import { SignupPage } from "./components/auth/SignupPage";
 import { RiskScoringView } from "./components/RiskScoringView";
 import { ChannelFlowView } from "./components/ChannelFlowView";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 
 export const router = createBrowserRouter([
   {
@@ -21,17 +22,22 @@ export const router = createBrowserRouter([
     Component: SignupPage,
   },
   {
-    path: "/",
-    Component: RootLayout,
+    element: <ProtectedRoute />,
     children: [
-      { index: true, Component: DashboardView },
-      { path: "graph", Component: GraphView },
-      { path: "alerts", Component: AlertsView },
-      { path: "risk-scoring", Component: RiskScoringView },
-      { path: "channel-flow", Component: ChannelFlowView },
-      { path: "transactions", Component: TransactionsView },
-      { path: "reports", Component: ReportsView },
-      { path: "settings", Component: SettingsView },
+      {
+        path: "/",
+        Component: RootLayout,
+        children: [
+          { index: true, Component: DashboardView },
+          { path: "graph", Component: GraphView },
+          { path: "alerts", Component: AlertsView },
+          { path: "risk-scoring", Component: RiskScoringView },
+          { path: "channel-flow", Component: ChannelFlowView },
+          { path: "transactions", Component: TransactionsView },
+          { path: "reports", Component: ReportsView },
+          { path: "settings", Component: SettingsView },
+        ],
+      },
     ],
   },
 ]);

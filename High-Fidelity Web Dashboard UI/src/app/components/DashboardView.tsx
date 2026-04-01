@@ -37,21 +37,21 @@ export function DashboardView() {
       </div>
 
       {/* Graph and Live Transactions Section */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 isolate">
-        <div className="xl:col-span-2">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div className="xl:col-span-2 min-h-0">
           <GraphPanel onNodeClick={setSelectedAccount} />
         </div>
-        <div className="h-full">
+        <div className="min-h-0">
           <TransactionStream />
         </div>
       </div>
 
       {/* Channel Flow and Alerts Section */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 isolate">
-        <div>
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div className="min-h-0">
           <ChannelFlow />
         </div>
-        <div>
+        <div className="min-h-0">
           <AlertPanel />
         </div>
       </div>

@@ -1,13 +1,17 @@
-import { Link, useLocation } from 'react-router';
-import { Bell, User, Shield, Moon, Sun } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router';
+import { Bell, User, Shield, Moon, Sun, LogOut } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { useTheme } from '../contexts/ThemeContext';
 
 export function Navbar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
   const isDark = theme === 'dark';
-  
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
   const tabs = [
     { name: 'Dashboard', path: '/' },
     { name: 'Graph View', path: '/graph' },
@@ -17,10 +21,28 @@ export function Navbar() {
     { name: 'Settings', path: '/settings' },
   ];
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowUserMenu(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('refresh_token');
+    setShowUserMenu(false);
+    navigate('/login');
+  };
+
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 h-16 backdrop-blur-xl border-b shadow-lg ${
-      isDark 
-        ? 'bg-slate-950/80 border-cyan-500/20 shadow-cyan-500/10' 
+      isDark
+        ? 'bg-slate-950/80 border-cyan-500/20 shadow-cyan-500/10'
         : 'bg-white/80 border-slate-300 shadow-slate-200/50'
     }`}>
       <div className="flex items-center justify-between h-full px-6">
@@ -45,7 +67,7 @@ export function Navbar() {
               to={tab.path}
               className={`px-4 py-2 rounded-lg transition-all duration-200 ${
                 location.pathname === tab.path
-                  ? isDark 
+                  ? isDark
                     ? 'bg-cyan-500/20 text-cyan-400 shadow-lg shadow-cyan-500/20'
                     : 'bg-cyan-100 text-cyan-700 shadow-lg shadow-cyan-500/10'
                   : isDark
@@ -61,11 +83,11 @@ export function Navbar() {
         {/* Right side */}
         <div className="flex items-center gap-4">
           {/* Theme toggle */}
-          <button 
+          <button
             onClick={toggleTheme}
             className={`p-2 rounded-lg transition-all ${
-              isDark 
-                ? 'hover:bg-slate-800/50 text-slate-400 hover:text-cyan-400' 
+              isDark
+                ? 'hover:bg-slate-800/50 text-slate-400 hover:text-cyan-400'
                 : 'hover:bg-slate-100 text-slate-600 hover:text-cyan-600'
             }`}
             aria-label="Toggle theme"
@@ -81,13 +103,40 @@ export function Navbar() {
               3
             </Badge>
           </button>
-          <button className={`flex items-center gap-2 p-2 rounded-lg transition-all ${
-            isDark ? 'hover:bg-slate-800/50' : 'hover:bg-slate-100'
-          }`}>
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-400 to-purple-500 flex items-center justify-center">
-              <User className="w-5 h-5 text-white" />
-            </div>
-          </button>
+
+          {/* User menu */}
+          <div className="relative" ref={menuRef}>
+            <button
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              className={`flex items-center gap-2 p-2 rounded-lg transition-all ${
+                isDark ? 'hover:bg-slate-800/50' : 'hover:bg-slate-100'
+              }`}
+            >
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-400 to-purple-500 flex items-center justify-center">
+                <User className="w-5 h-5 text-white" />
+              </div>
+            </button>
+
+            {showUserMenu && (
+              <div className={`absolute right-0 top-full mt-2 w-48 rounded-xl border shadow-2xl z-50 overflow-hidden ${
+                isDark
+                  ? 'bg-slate-900 border-slate-700'
+                  : 'bg-white border-slate-200'
+              }`}>
+                <button
+                  onClick={handleLogout}
+                  className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${
+                    isDark
+                      ? 'text-red-400 hover:bg-red-500/10'
+                      : 'text-red-600 hover:bg-red-50'
+                  }`}
+                >
+                  <LogOut className="w-4 h-4" />
+                  Sign Out
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </nav>
