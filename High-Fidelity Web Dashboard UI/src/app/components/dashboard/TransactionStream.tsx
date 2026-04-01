@@ -36,7 +36,7 @@ export function TransactionStream() {
         riskScore: Math.floor(Math.random() * 100),
         status: Math.random() > 0.7 ? 'flagged' : 'completed',
       };
-      setTransactions(prev => [newTxn, ...prev.slice(0, 9)]);
+      setTransactions((prev: Transaction[]) => [newTxn, ...prev.slice(0, 9)]);
     }, 3000);
 
     return () => clearInterval(interval);
@@ -64,7 +64,7 @@ export function TransactionStream() {
     <motion.div
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
-      className="bg-slate-900/50 backdrop-blur-xl rounded-xl border-2 border-slate-700/50 h-[500px] flex flex-col shadow-xl"
+      className="bg-slate-900/50 backdrop-blur-xl rounded-xl border-2 border-slate-700/50 h-[500px] flex flex-col shadow-xl overflow-hidden"
     >
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-slate-700/50">
@@ -82,7 +82,7 @@ export function TransactionStream() {
       <ScrollArea className="flex-1">
         <div className="p-4 space-y-3">
           <AnimatePresence>
-            {transactions.map((txn, index) => {
+            {transactions.map((txn: Transaction, index: number) => {
               const risk = getRiskBadge(txn.riskScore);
               const ts = txn.timestamp instanceof Date ? txn.timestamp : new Date(txn.timestamp as any);
 

@@ -39,7 +39,7 @@ export function AlertPanel() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.3 }}
-      className="bg-slate-900/50 backdrop-blur-xl rounded-xl border-2 border-slate-700/50 flex flex-col shadow-xl"
+      className="bg-slate-900/50 backdrop-blur-xl rounded-xl border-2 border-slate-700/50 flex flex-col shadow-xl overflow-hidden h-[500px]"
     >
       {/* Header */}
       <div className="p-6 border-b border-slate-700/50">
@@ -55,7 +55,7 @@ export function AlertPanel() {
       </div>
 
       {/* Alert list */}
-      <ScrollArea className="flex-1 max-h-96">
+      <ScrollArea className="flex-1">
         <div className="p-6 space-y-4">
           {loading && alertList.length === 0 && (
             <div className="space-y-3">
