@@ -14,7 +14,7 @@ import time
 import uuid
 from collections import deque
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Dict, Optional
 
 try:  # pragma: no cover - optional dependency
     import redis

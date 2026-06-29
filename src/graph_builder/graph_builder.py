@@ -2,7 +2,7 @@
 Graph Builder - Constructs and updates Neo4j entity graph from normalized transactions
 """
 
-from typing import Dict, List, Tuple, Optional, Any
+from typing import Dict, List, Any
 from dataclasses import dataclass
 from datetime import datetime
 import logging

@@ -7,7 +7,7 @@ import os
 import threading
 import time
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 
 
 def hash_entity_id(entity_type: str, raw_value: str, salt: str | None = None) -> str:

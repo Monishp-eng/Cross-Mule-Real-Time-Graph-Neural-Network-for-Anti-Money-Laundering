@@ -11,7 +11,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from io import StringIO
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List
 
 import pandas as pd
 
@@ -305,7 +305,7 @@ def build_account_feature_table(transactions: List[Dict[str, Any]]) -> pd.DataFr
         receiver_stats["fraud_event_count"] += int(source_is_fraud)
 
     features: List[Dict[str, Any]] = []
-    now = max(tx["timestamp"] for tx in transactions)
+    max(tx["timestamp"] for tx in transactions)
 
     for account_id, stats in account_stats.items():
         timestamps = sorted(stats["timestamps"])
@@ -408,8 +408,8 @@ def build_graph_snapshot(transactions: List[Dict[str, Any]]) -> Dict[str, Any]:
         location = tx.get("location", {})
         edge_time = tx.get("timestamp_iso")
 
-        sender_risk = float(feature_lookup.get(sender).velocity_score if sender in feature_lookup else 0.0)
-        receiver_risk = float(feature_lookup.get(receiver).velocity_score if receiver in feature_lookup else 0.0)
+        float(feature_lookup.get(sender).velocity_score if sender in feature_lookup else 0.0)
+        float(feature_lookup.get(receiver).velocity_score if receiver in feature_lookup else 0.0)
         suspicious = tx["amount"] >= 5000 or tx["time_diff_minutes"] <= 5.0
 
         add_node(tx_id, tx_id, "transaction", suspicious=suspicious, amount=tx["amount"], transaction_type=tx["transaction_type"])

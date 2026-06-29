@@ -3,7 +3,7 @@ Risk Scoring Engine - Computes composite risk scores from transaction features
 """
 
 from dataclasses import dataclass
-from typing import Dict, Tuple
+from typing import Dict, Optional
 import math
 import logging
 
@@ -77,7 +77,7 @@ class RiskScorer:
     def compute_velocity_score(
         self,
         current_txn_count_1h: int,
-        baseline_txn_count: int = None
+        baseline_txn_count: Optional[int] = None
     ) -> float:
         """
         Score based on transaction velocity.
@@ -111,7 +111,7 @@ class RiskScorer:
     def compute_account_diversity_score(
         self,
         unique_counterparties: int,
-        baseline_diversity: int = None
+        baseline_diversity: Optional[int] = None
     ) -> float:
         """
         Score based on account diversity.

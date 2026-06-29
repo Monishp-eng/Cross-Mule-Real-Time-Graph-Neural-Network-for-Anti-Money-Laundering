@@ -2659,7 +2659,7 @@ def predict_from_csv(request: PredictCsvRequest) -> Dict[str, Any]:
     if not records:
         raise HTTPException(status_code=400, detail={"status": "ERROR", "reason": "CSV dataset is empty"})
 
-    record_lookup = {
+    {
         str(record.get("transaction_id") or ""): record
         for record in records
         if record.get("transaction_id")

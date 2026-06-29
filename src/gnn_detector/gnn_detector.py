@@ -293,7 +293,7 @@ class SimpleGNNDetector:
         Returns: Detection result with score and pattern
         """
         # Step 1: Extract features
-        anchor_feat = self.extract_node_features(anchor_account)
+        self.extract_node_features(anchor_account)
         
         # Step 2: Find neighbors
         neighbors = {
@@ -395,7 +395,7 @@ if __name__ == "__main__":
     # Detect
     result = detector.detect_mule_ring(anchor, connected, {})
     
-    print(f"Mule Ring Detection Result:")
+    print("Mule Ring Detection Result:")
     print(f"  Probability: {result['mule_probability']:.3f}")
     print(f"  Confidence: {result['confidence']:.3f}")
     print(f"  Decision: {result['decision']}")

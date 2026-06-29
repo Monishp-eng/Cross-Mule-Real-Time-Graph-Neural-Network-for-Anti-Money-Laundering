@@ -6,7 +6,7 @@ Converts disparate sources (Mobile, Web, ATM, UPI) to standard schema
 import json
 import hashlib
 from datetime import datetime, timezone
-from typing import Dict, Any, Optional
+from typing import Dict, Optional
 from dataclasses import dataclass, asdict
 from enum import Enum
 import logging
@@ -105,7 +105,7 @@ class DataNormalizer:
     def __init__(self):
         self.pii_cache = {}  # For consistent hashing
         
-    def hash_pii(self, value: str) -> str:
+    def hash_pii(self, value: str) -> Optional[str]:
         """Hash PII values consistently (same input → same hash)"""
         if not value:
             return None
