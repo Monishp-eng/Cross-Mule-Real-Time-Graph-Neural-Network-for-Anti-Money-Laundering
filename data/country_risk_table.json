@@ -1,0 +1,14 @@
+{
+  "US": {"tier": "low", "score": 0.1},
+  "UK": {"tier": "low", "score": 0.12},
+  "IN": {"tier": "low", "score": 0.18},
+  "AE": {"tier": "medium", "score": 0.42},
+  "SG": {"tier": "medium", "score": 0.38},
+  "CN": {"tier": "high", "score": 0.8},
+  "TR": {"tier": "high", "score": 0.74},
+  "IR": {"tier": "high", "score": 0.95},
+  "KP": {"tier": "high", "score": 0.98},
+  "SY": {"tier": "high", "score": 0.96},
+  "CU": {"tier": "high", "score": 0.92},
+  "RU": {"tier": "high", "score": 0.75}
+}

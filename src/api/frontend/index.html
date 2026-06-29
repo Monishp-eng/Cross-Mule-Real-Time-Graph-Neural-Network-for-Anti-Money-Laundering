@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mule Detection Console</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/ui/styles.css" />
+</head>
+<body>
+  <div class="bg-grid" aria-hidden="true"></div>
+  <header class="hero">
+    <div class="hero__left">
+      <p class="kicker">Cross-Channel Detection</p>
+      <h1>Mule Detection Console</h1>
+      <p class="sub">Live risk scoring, decision simulation, and stream monitoring for the completed backend APIs.</p>
+    </div>
+    <div class="hero__right">
+      <label for="apiBase">API Base URL</label>
+      <input id="apiBase" type="text" placeholder="http://localhost:8000" />
+      <label for="apiKey">API Key (optional)</label>
+      <input id="apiKey" type="password" placeholder="x-api-key for AUTH_REQUIRED mode" />
+      <button id="saveApiBase" class="btn btn--ghost" type="button">Save</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="panel panel--metrics" data-reveal>
+      <div class="panel__head">
+        <h2>System Status</h2>
+        <div class="status-pill">
+          <span id="liveDot" class="status-dot"></span>
+          <span id="liveText">Checking</span>
+        </div>
+        <button id="refreshStats" class="btn" type="button">Refresh</button>
+      </div>
+      <p class="hint">
+        When backend auth is enabled, set API key and click Save to include it as <code>x-api-key</code>.
+      </p>
+      <div class="cards" id="statsCards">
+        <article class="card"><h3>Requests</h3><p id="mRequests">-</p></article>
+        <article class="card"><h3>Errors</h3><p id="mErrors">-</p></article>
+        <article class="card"><h3>Latency Avg</h3><p id="mLatAvg">-</p></article>
+        <article class="card"><h3>Latency P95</h3><p id="mLatP95">-</p></article>
+        <article class="card"><h3>Fraud Rate</h3><p id="mFraud">-</p></article>
+      </div>
+      <pre id="statsRaw" class="output skeleton">Loading stats...</pre>
+    </section>
+
+    <section class="panel" data-reveal>
+      <div class="panel__head">
+        <h2>Demo Scenarios</h2>
+      </div>
+      <div class="scenario-actions">
+        <button class="btn" data-scenario="ALLOW" type="button">Run ALLOW</button>
+        <button class="btn btn--warn" data-scenario="FLAG" type="button">Run FLAG</button>
+        <button class="btn btn--danger" data-scenario="BLOCK" type="button">Run BLOCK</button>
+      </div>
+      <pre id="demoOutput" class="output skeleton">Choose a scenario to run.</pre>
+    </section>
+
+    <section class="panel panel--wide" data-reveal>
+      <div class="panel__head">
+        <h2>Process Transaction</h2>
+      </div>
+      <form id="txnForm" class="form-grid">
+        <label>Channel
+          <select name="channel">
+            <option>MOBILE</option>
+            <option>WEB</option>
+            <option>ATM</option>
+            <option>UPI</option>
+          </select>
+        </label>
+        <label>User / Terminal ID
+          <input name="userId" required />
+        </label>
+        <label>Destination / Recipient
+          <input name="destination" required />
+        </label>
+        <label>Amount
+          <input name="amount" type="number" min="1" step="0.01" value="1200" required />
+        </label>
+        <label>Latitude
+          <input name="lat" type="number" step="0.0001" value="12.9716" required />
+        </label>
+        <label>Longitude
+          <input name="lon" type="number" step="0.0001" value="77.5946" required />
+        </label>
+        <button class="btn" type="submit">Submit Transaction</button>
+      </form>
+      <pre id="txnOutput" class="output skeleton">Submit a transaction to view decision output.</pre>
+    </section>
+
+    <section class="panel" data-reveal>
+      <div class="panel__head">
+        <h2>Stream Queue</h2>
+        <button id="refreshStream" class="btn" type="button">Refresh</button>
+      </div>
+      <div class="scenario-actions">
+        <button id="pushToStream" class="btn" type="button">Publish Sample Event</button>
+      </div>
+      <pre id="streamOutput" class="output skeleton">Fetching stream activity...</pre>
+    </section>
+
+    <section class="panel" data-reveal>
+      <div class="panel__head">
+        <h2>Privacy Intel</h2>
+        <button id="refreshIntel" class="btn" type="button">Refresh</button>
+      </div>
+      <pre id="intelOutput" class="output skeleton">Fetching intel summary...</pre>
+    </section>
+  </main>
+
+  <script src="/ui/app.js"></script>
+</body>
+</html>

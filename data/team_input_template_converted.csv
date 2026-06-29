@@ -1,0 +1,4 @@
+transaction_id,sender_id,receiver_id,amount,timestamp,transaction_type,device_id,latitude,longitude,country,is_fraud,status,fraud_reason,currency,narration,pincode,mobile_number,name,account_number,account_product_type
+TXN_1,ACC001,ACC090,1250.00,2026-04-04T10:15:00Z,UPI,9876543210,12.9716,77.5946,IN,0,ALLOW,,INR,UPI transfer to vendor,560001,9876543210,Ravi Kumar,ACC001,SAVINGS
+TXN_2,ACC001,ACC200,9800.00,2026-04-04T10:17:00Z,WEB,9876543210,12.9716,77.5946,IN,1,FLAG,rapid_chain,INR,NEFT outward transfer,560001,9876543210,Ravi Kumar,ACC001,SAVINGS
+TXN_3,ACC300,ATM001,15000.00,2026-04-04T10:19:00Z,ATM,9988776655,12.9716,77.5946,IN,1,BLOCK,high_velocity,INR,ATM cash withdrawal,400001,9988776655,Anita Shah,ACC300,CURRENT

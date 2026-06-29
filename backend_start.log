@@ -1,0 +1,11 @@
+nohup: ignoring input
+INFO:     Started server process [23688]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+ERROR:    [Errno 10048] error while attempting to bind on address ('127.0.0.1', 8000): [winerror 10048] only one usage of each socket address (protocol/network address/port) is normally permitted
+INFO:     Waiting for application shutdown.
+INFO:src.orchestrator:Connected to Neo4j successfully.
+INFO:src.orchestrator:Connected to Neo4j successfully.
+INFO:src.gnn_detector.gnn_detector:Loaded trained GNN model from models/gnn_mule_detector.pt
+INFO:src.gnn_detector.gnn_detector:Loaded trained GNN model from models/gnn_mule_detector.pt
+INFO:     Application shutdown complete.

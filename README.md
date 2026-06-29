@@ -2,6 +2,65 @@
 
 A Graph Neural Network (GNN)-based real-time transaction monitoring system for detecting money mule rings across multiple payment channels.
 
+## Internal Analyst Platform (Current UI)
+
+This repository now exposes an internal, staff-only analyst console in the frontend.
+
+- Frontend URL: http://127.0.0.1:5173
+- Backend URL: http://127.0.0.1:8000
+- Login API: POST /login
+- Main analyst routes:
+        - /dashboard
+        - /alerts
+        - /users/:userId
+        - /compliance
+
+### Default Staff Credentials
+
+These users are seeded automatically at backend startup:
+
+- Analyst
+        - Identity: EMP-1001 (or analyst@bank.local)
+        - Password: Analyst@123
+        - Role: ANALYST
+- Admin
+        - Identity: EMP-9001 (or admin@bank.local)
+        - Password: Admin@123
+        - Role: ADMIN
+
+You can override these defaults with STAFF_BOOTSTRAP_USERS using:
+
+- email|employee_id|password|role|full_name;email|employee_id|password|role|full_name
+
+### Local Run
+
+Backend:
+
+1. Open a terminal at the repository root.
+2. Run: .\\.venv\\Scripts\\python.exe -m uvicorn src.api.server:app --host 127.0.0.1 --port 8000
+
+Frontend:
+
+1. Open a terminal in frontend.
+2. Run: npm run dev -- --host 127.0.0.1
+
+Optional production build check:
+
+- In frontend, run: npm run build
+
+### Analyst APIs Wired in Frontend
+
+- POST /login
+- GET /alerts
+- POST /alerts/{alert_id}/action
+- GET /users
+- GET /users/{user_id}
+- GET /risk-score?user_id=...
+- GET /transactions
+- GET /graph
+- GET /compliance/sar
+- GET /compliance/risk-summary
+
 ## Quick Start
 
 ```
@@ -21,9 +80,6 @@ src/                          # Source code modules
 └── compliance-reporting/     # Regulatory reports & audit
 
 infra/                        # Infrastructure as Code
-├── azure-bicep/              # Azure Bicep templates
-├── kubernetes/               # K8s manifests (optional)
-└── deployment.md             # Deployment guide
 
 tests/                        # Unit & integration tests
 ```
@@ -76,12 +132,12 @@ UPI/Bank APIs    ─└─→ [Transformer]         [Entity Index]         [Risk
 | Component | Recommended | Alternative |
 |-----------|-------------|------------|
 | **Graph DB** | Neo4j Aura (Cloud) | ArangoDB, TigerGraph |
-| **Streaming** | Azure Event Hubs + Kafka | AWS Kinesis, Pub/Sub |
+| **Streaming** | Kafka / Pub/Sub | Azure Event Hubs, Kinesis |
 | **ML/GNN** | PyTorch Geometric | DGL, Spektral |
 | **Processing** | Apache Spark | Flink, Beam |
-| **Computing** | Azure Container Apps / AKS | AWS ECS/EKS, K8s |
-| **Data Lake** | Azure Blob Storage | S3, GCS |
-| **Monitoring** | Azure Monitor + App Insights | Prometheus, Datadog |
+| **Computing** | Container services | Kubernetes, managed containers |
+| **Data Lake** | GCS / Blob Storage | S3, Azure Blob Storage |
+| **Monitoring** | Cloud Operations + OpenTelemetry | Prometheus, Datadog |
 | **Language** | Python 3.11+ | Java, Go |
 
 ---
@@ -91,15 +147,14 @@ UPI/Bank APIs    ─└─→ [Transformer]         [Entity Index]         [Risk
 1. **Read [SYSTEM_DESIGN.md](docs/SYSTEM_DESIGN.md)** for end-to-end architecture
 2. **Review [DATA_SPEC.md](docs/DATA_SPEC.md)** for entity models
 3. **Check [IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md)** for MVP roadmap
-4. **Deploy infra** using [infra/deployment.md](infra/deployment.md)
-5. **Run tests** to validate each module
+4. **Run tests** to validate each module
 
 ---
 
 ## Key Decision Points for Your Team
 
 - [ ] Choose Graph DB (Neo4j vs. Cosmos vs. ArangoDB)
-- [ ] Streaming platform (Kafka vs. Azure Event Hubs vs. Pulsar)
+- [ ] Streaming platform (Kafka vs. Pub/Sub vs. Pulsar)
 - [ ] GNN model complexity (basic classification vs. advanced anomaly detection)
 - [ ] Privacy framework (differential privacy, federated learning?)
 - [ ] Compliance scope (GDPR, AML/KYC, jurisdiction-specific rules)

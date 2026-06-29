@@ -1,0 +1,5 @@
+transaction_id,sender_id,receiver_id,amount,timestamp,transaction_type,device_id,latitude,longitude,country
+T1,ACC_1,ACC_2,1200,2026-03-22T10:01:00Z,MOBILE,DEV_1,12.97,77.59,IN
+T2,ACC_2,ACC_3,3400,2026-03-22T10:03:00Z,WEB,DEV_2,12.98,77.60,IN
+T3,ACC_3,ATM_1,9800,2026-03-22T10:05:00Z,ATM,ATM_DEV_1,12.99,77.61,IN
+T4,ACC_2,ACC_4,450,2026-03-22T10:07:00Z,UPI,DEV_3,12.97,77.59,IN

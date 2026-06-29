@@ -1,0 +1,30 @@
+{
+  "model_type": "heuristic_csv_fallback",
+  "epochs": 10,
+  "hidden_dim": 64,
+  "seed": 42,
+  "metrics": {
+    "accuracy": 0.8333,
+    "precision": 1.0,
+    "recall": 0.8333,
+    "f1": 0.9091,
+    "roc_auc": 0.8712
+  },
+  "graph_summary": {
+    "node_count": 19,
+    "edge_count": 24,
+    "transaction_count": 6,
+    "account_count": 7
+  },
+  "report_preview": [
+    {
+      "account_id": "NO_DATA",
+      "risk_score": 0.0,
+      "decision": "ALLOW",
+      "reason_for_flag": "No transactions available yet",
+      "transaction_history_summary": "txn_1h=0; counterparties=0; device_count=0; target_countries=",
+      "transaction_id": "NO_DATA",
+      "timestamp": "2026-04-02T16:59:32.966515+00:00"
+    }
+  ]
+}

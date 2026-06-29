@@ -1,0 +1,52 @@
+name: Load Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Base URL for the API"
+        required: true
+        default: "http://127.0.0.1:8000"
+      users:
+        description: "Concurrent users"
+        required: true
+        default: "10"
+      spawn_rate:
+        description: "Spawn rate"
+        required: true
+        default: "2"
+      duration:
+        description: "Test duration"
+        required: true
+        default: "2m"
+
+jobs:
+  locust:
+    name: Run Locust load test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run load test
+        env:
+          API_BASE_URL: ${{ inputs.base_url }}
+          API_KEY: ${{ secrets.LOAD_TEST_API_KEY }}
+        run: |
+          locust -f load-tests/locustfile.py \
+            --headless \
+            -u ${{ inputs.users }} \
+            -r ${{ inputs.spawn_rate }} \
+            -t ${{ inputs.duration }} \
+            --host ${{ inputs.base_url }}

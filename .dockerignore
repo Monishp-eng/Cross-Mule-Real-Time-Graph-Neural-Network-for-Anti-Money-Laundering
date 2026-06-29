@@ -1,0 +1,17 @@
+.git
+.gitignore
+.vscode
+.venv
+.env
+.env.*
+__pycache__
+.pytest_cache
+frontend/node_modules
+frontend/dist
+load-tests
+artifacts
+docs
+architecture
+*.sqlite3
+*.sqlite3-shm
+*.sqlite3-wal

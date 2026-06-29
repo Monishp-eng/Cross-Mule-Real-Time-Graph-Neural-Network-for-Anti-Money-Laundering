@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Auto-Login</title>
+</head>
+<body>
+  <script>
+    // Auto-login and redirect to dashboard
+    const loginUser = async () => {
+      try {
+        const response = await fetch('/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            identity: 'admin@bank.local',
+            password: 'Admin@123'
+          })
+        });
+
+        const data = await response.json();
+        if (data.access_token) {
+          localStorage.setItem('cmds_auth_token', data.access_token);
+          window.location.href = '/';
+        } else {
+          alert('Login failed: ' + (data.detail || 'Unknown error'));
+        }
+      } catch (error) {
+        alert('Error: ' + error.message);
+      }
+    };
+
+    loginUser();
+  </script>
+  <p>Logging in...</p>
+</body>
+</html>

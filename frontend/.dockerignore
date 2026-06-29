@@ -1,0 +1,15 @@
+.git
+.github
+.gitignore
+.env
+.env.local
+.venv
+node_modules
+*.pyc
+__pycache__
+.pytest_cache
+.vscode
+.idea
+*.md
+.dockerignore
+.github

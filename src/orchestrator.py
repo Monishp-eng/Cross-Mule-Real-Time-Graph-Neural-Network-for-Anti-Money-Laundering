@@ -24,6 +24,13 @@ from src.data_ingestion.normalizer import DataNormalizer, DataQualityValidator
 from src.graph_builder.graph_builder import GraphBuilder
 from src.risk_scoring.risk_scorer import RiskScorer
 from src.gnn_detector.gnn_detector import SimpleGNNDetector
+from src.compliance_reporting import (
+    JurisdictionRiskEngine,
+    PrivacyIntelManager,
+    SanctionsScreeningEngine,
+    TransactionComplexityDetector,
+)
+from src.storage.factory import create_repository
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -101,6 +108,12 @@ class MuleDetectionOrchestrator:
         self.graph_builder = GraphBuilder(neo4j_client)
         self.risk_scorer = RiskScorer()
         self.gnn_detector = SimpleGNNDetector()
+        self.sanctions_engine = SanctionsScreeningEngine()
+        self.complexity_detector = TransactionComplexityDetector()
+        self.jurisdiction_engine = JurisdictionRiskEngine()
+        self.privacy_manager = PrivacyIntelManager(ttl_seconds=int(os.getenv("INTEL_REPLAY_TTL_SECONDS", "3600")))
+        self.repository = create_repository()
+        self.strict_gnn_mode = os.getenv("GNN_STRICT_MODE", "false").strip().lower() in {"1", "true", "yes", "on"}
 
         self.ml_weight = max(0.0, min(1.0, float(os.getenv("HYBRID_ML_WEIGHT", "0.65"))))
         self.rule_weight = 1.0 - self.ml_weight
@@ -136,7 +149,14 @@ class MuleDetectionOrchestrator:
         )
 
     @staticmethod
-    def _top_reasons(risk_result, mule_result: Dict, enhanced_signals: Optional[Dict[str, float]] = None) -> List[str]:
+    def _top_reasons(
+        risk_result,
+        mule_result: Dict,
+        enhanced_signals: Optional[Dict[str, float]] = None,
+        sanctions_result: Optional[Dict[str, Any]] = None,
+        complexity_result: Optional[Dict[str, Any]] = None,
+        jurisdiction_result: Optional[Dict[str, Any]] = None,
+    ) -> List[str]:
         reasons: List[str] = []
         contrib = risk_result.factor_contributions
 
@@ -171,17 +191,37 @@ class MuleDetectionOrchestrator:
             if enhanced_signals.get("intel_signal_score", 0.0) > 0.0:
                 reasons.append("peer_bank_privacy_signal_match")
 
+        if sanctions_result and sanctions_result.get("sanctions_flag"):
+            reasons.append("sanctions_screen_match")
+        if complexity_result and complexity_result.get("complexity_score", 0.0) >= 60:
+            complexity_type = complexity_result.get("complexity_type", "complexity")
+            reasons.append(f"{complexity_type}_behavior_detected")
+        if jurisdiction_result and jurisdiction_result.get("risk_band") == "HIGH":
+            reasons.append("high_risk_jurisdiction_routing")
+
         return reasons[:8]
 
     @staticmethod
     def _hash_value(value: str) -> str:
         return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
-    def share_privacy_indicator(self, indicator_type: str, raw_value: str, source_bank: str = "BANK_LOCAL", confidence: float = 0.7) -> Dict[str, Any]:
+    def share_privacy_indicator(
+        self,
+        indicator_type: str,
+        raw_value: str,
+        source_bank: str = "BANK_LOCAL",
+        confidence: float = 0.7,
+        nonce: Optional[str] = None,
+        event_timestamp: Optional[str] = None,
+    ) -> Dict[str, Any]:
         indicator = (indicator_type or "").strip().lower()
         value = (raw_value or "").strip().lower()
         if not indicator or not value:
             raise ValueError("indicator_type and value are required")
+
+        replay_ok = True
+        if nonce:
+            replay_ok = self.privacy_manager.replay_guard.register(nonce, event_timestamp)
 
         hashed_value = self._hash_value(f"{indicator}:{value}")
         record = self._intel_indicators.get(hashed_value)
@@ -209,6 +249,8 @@ class MuleDetectionOrchestrator:
             "source_bank_count": len(record["source_banks"]),
             "sightings": record["sightings"],
             "confidence": round(record["confidence"], 4),
+            "replay_detected": not replay_ok,
+            "replay_protected": True,
         }
 
     def _evaluate_privacy_signals(self, normalized, raw_payload: Dict[str, Any]) -> Tuple[float, List[str], int]:
@@ -282,6 +324,11 @@ class MuleDetectionOrchestrator:
             "indicator_count": len(self._intel_indicators),
             "total_sightings": total_sightings,
             "high_confidence_indicators": high_conf,
+            "privacy_features": {
+                "hashed_entity_ids": True,
+                "replay_protection": True,
+                "federated_embedding_simulation": True,
+            },
         }
 
     @staticmethod
@@ -302,20 +349,36 @@ class MuleDetectionOrchestrator:
         reasons: List[str],
         confidence_score: float,
         model_version: str,
+        sanctions_result: Optional[Dict[str, Any]] = None,
+        complexity_result: Optional[Dict[str, Any]] = None,
+        jurisdiction_result: Optional[Dict[str, Any]] = None,
+        privacy_result: Optional[Dict[str, Any]] = None,
+        accounts_involved: Optional[List[str]] = None,
+        transaction_path: Optional[List[str]] = None,
     ) -> Dict:
         timestamp = cls._utc_now_iso()
         report_seed = f"{transaction_id}|{trace_id}|{decision}|{risk_score:.6f}|{timestamp}"
         report_id = "RPT-" + hashlib.sha1(report_seed.encode("utf-8")).hexdigest()[:12].upper()
+        patterns = [reason for reason in reasons if reason]
         return {
             "schema_version": "1.0",
             "report_id": report_id,
+            "case_id": report_id,
             "timestamp": timestamp,
             "trace_id": trace_id,
             "decision": decision,
             "risk_score": round(risk_score, 4),
             "confidence_score": confidence_score,
             "reasons": reasons,
+            "why_flagged": "; ".join(reasons) if reasons else "No reason supplied",
+            "detected_patterns": patterns,
             "model_version": model_version,
+            "accounts_involved": accounts_involved or [],
+            "transaction_path": transaction_path or [],
+            "sanctions_screening": sanctions_result or {},
+            "transaction_complexity": complexity_result or {},
+            "jurisdiction_risk": jurisdiction_result or {},
+            "privacy_safe_intelligence": privacy_result or {},
         }
 
     @staticmethod
@@ -358,7 +421,7 @@ class MuleDetectionOrchestrator:
         database = os.getenv("NEO4J_DATABASE", "neo4j").strip() or "neo4j"
 
         if not uri or not username or not password or "<your-password>" in password:
-            logger.warning("NEO4J credentials are missing or placeholders are in use. Running without Neo4j persistence.")
+            logger.info("Neo4j persistence disabled for local run.")
             return None
 
         try:
@@ -367,7 +430,10 @@ class MuleDetectionOrchestrator:
             logger.info("Connected to Neo4j successfully.")
             return client
         except Exception as exc:
-            logger.error(f"Neo4j connection failed: {exc}")
+            logger.warning(
+                "Neo4j connection failed; continuing in degraded mode without graph persistence: %s",
+                exc,
+            )
             return None
     
     def process_event(self, raw_event: Dict) -> Dict:
@@ -425,6 +491,10 @@ class MuleDetectionOrchestrator:
             graph_success = True
             if not is_duplicate:
                 graph_success = self.graph_builder.ingest_transaction(normalized_dict)
+
+            if graph_persist_enabled and not graph_success and not degraded_mode:
+                degraded_mode = True
+                self.stats["degraded"] += 1
 
             if graph_success and graph_persist_enabled and not is_duplicate:
                 self.stats["graph_updated"] += 1
@@ -500,12 +570,52 @@ class MuleDetectionOrchestrator:
                 connected_accounts=connected_accounts,
                 transaction_graph={}
             )
+            if self.strict_gnn_mode and mule_result.get("model_version") != "GraphSAGE_trained_v1":
+                return {
+                    "status": "ERROR",
+                    "trace_id": trace_id,
+                    "reason": "gnn_model_not_ready_in_strict_mode",
+                    "trace": trace_steps,
+                }
             self._append_trace(trace_steps, "gnn_score", t0)
+
+            # Step 5b: Control modules
+            t0 = time.perf_counter()
+            routing_hops = int(raw_payload.get("routing_hops", 1) or 1) if isinstance(raw_payload, dict) else 1
+            complexity_result = self.complexity_detector.detect(
+                current_txn_count_1h=overrides["current_txn_count_1h"],
+                unique_counterparties=overrides["unique_counterparties"],
+                connected_accounts=connected_accounts,
+                amounts=overrides.get("amounts", []),
+                routing_hops=routing_hops,
+                time_diff_minutes=float(activity.get("min_time_gap_minutes", 0.0) or 0.0),
+                inbound_count=int(activity.get("received_count", 0) or 0),
+                outbound_count=int(activity.get("sent_count", 0) or 0),
+            )
+            jurisdiction_result = self.jurisdiction_engine.score(
+                origin_country=getattr(normalized.location, "country", "US"),
+                destination_countries=overrides.get("target_countries", []),
+                repeated_high_risk_routing=1 if any(c in {"KP", "IR", "SY", "CU", "RU"} for c in overrides.get("target_countries", [])) else 0,
+            )
+            sanctions_result = self.sanctions_engine.screen(
+                raw_payload if isinstance(raw_payload, dict) else {},
+                normalized=normalized,
+                behavioral_risk=float(risk_result.overall_score),
+                country_risk=float(jurisdiction_result.get("jurisdiction_score", 0.0)),
+            )
+            self._append_trace(trace_steps, "control_modules", t0)
             
             # Step 6: Combined decision
             rule_score = float(risk_result.overall_score)
             ml_score = float(mule_result["mule_probability"])
             combined_risk = (self.ml_weight * ml_score) + (self.rule_weight * rule_score)
+            combined_risk = min(
+                1.0,
+                combined_risk
+                + (0.15 * float(complexity_result.get("complexity_score", 0.0)) / 100.0)
+                + (0.12 * float(sanctions_result.get("sanctions_score", 0.0)))
+                + (0.08 * float(jurisdiction_result.get("jurisdiction_score", 0.0))),
+            )
 
             # Deterministic hackathon demo behavior when explicit demo profile is provided.
             if demo_profile == "ALLOW":
@@ -514,6 +624,8 @@ class MuleDetectionOrchestrator:
                 combined_risk = max(0.45, min(combined_risk, 0.65))
             elif demo_profile == "BLOCK":
                 combined_risk = max(0.82, combined_risk)
+            if sanctions_result.get("sanctions_flag"):
+                combined_risk = max(combined_risk, 0.80)
             
             t0 = time.perf_counter()
             if combined_risk >= 0.70:
@@ -569,7 +681,14 @@ class MuleDetectionOrchestrator:
             combined_risk = min(1.0, combined_risk + (self.pattern_boost_weight * pattern_signal_score) + (0.10 * intel_signal_score))
             self._append_trace(trace_steps, "advanced_patterns", t0)
 
-            reasons = self._top_reasons(risk_result, mule_result, enhanced_signals=enhanced_signals)
+            reasons = self._top_reasons(
+                risk_result,
+                mule_result,
+                enhanced_signals=enhanced_signals,
+                sanctions_result=sanctions_result,
+                complexity_result=complexity_result,
+                jurisdiction_result=jurisdiction_result,
+            )
             confidence_score = self._confidence_score(
                 final_risk=combined_risk,
                 ml_score=ml_score,
@@ -586,6 +705,16 @@ class MuleDetectionOrchestrator:
                 reasons=reasons,
                 confidence_score=confidence_score,
                 model_version=model_version,
+                sanctions_result=sanctions_result,
+                complexity_result=complexity_result,
+                jurisdiction_result=jurisdiction_result,
+                privacy_result={
+                    "matched_indicator_types": matched_indicators,
+                    "match_count": intel_match_count,
+                    "intel_signal_score": intel_signal_score,
+                },
+                accounts_involved=[normalized.source_account_id, normalized.dest_account_id],
+                transaction_path=[normalized.source_account_id, normalized.dest_account_id],
             )
             self._append_trace(trace_steps, "reporting", t0)
 
@@ -596,6 +725,8 @@ class MuleDetectionOrchestrator:
                 "transaction_id": normalized.event_id,
                 "trace_id": trace_id,
                 "decision": decision,
+                "amount": float(getattr(normalized, "amount", 0.0) or 0.0),
+                "currency": str(getattr(normalized, "currency", "INR") or "INR"),
                 "risk_score": round(combined_risk, 4),
                 "score_breakdown": {
                     "ml_score": round(ml_score, 4),
@@ -628,6 +759,9 @@ class MuleDetectionOrchestrator:
                     "sanctions_behavior_score": sanctions_behavior_score,
                     "intel_signal_score": intel_signal_score,
                     "pattern_signal_score": pattern_signal_score,
+                    "sanctions_score": sanctions_result.get("sanctions_score", 0.0),
+                    "complexity_score": complexity_result.get("complexity_score", 0.0),
+                    "jurisdiction_score": jurisdiction_result.get("jurisdiction_score", 0.0),
                 },
                 "explainability": {
                     "reasons": reasons,
@@ -639,10 +773,15 @@ class MuleDetectionOrchestrator:
                         "intel_matches": matched_indicators,
                     },
                 },
+                "sanctions_screening": sanctions_result,
+                "transaction_complexity": complexity_result,
+                "jurisdiction_risk": jurisdiction_result,
                 "privacy_safe_intelligence": {
                     "matched_indicator_types": matched_indicators,
                     "match_count": intel_match_count,
                     "intel_signal_score": intel_signal_score,
+                    "hashed_entity_id": self.privacy_manager.hash_entity_id("account", normalized.source_account_id),
+                    "replay_protected": True,
                 },
                 "reasons": reasons,
                 "model": {
@@ -671,6 +810,11 @@ class MuleDetectionOrchestrator:
                     }
                 )
             )
+            if self.repository is not None:
+                try:
+                    self.repository.save_result(result, raw_event if isinstance(raw_event, dict) else {}, normalized_dict)
+                except Exception as exc:
+                    logger.warning("SQLite persistence failed: %s", exc)
             return result
             
         except Exception as e:

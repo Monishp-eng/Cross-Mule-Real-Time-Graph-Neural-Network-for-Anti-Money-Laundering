@@ -1,0 +1,23 @@
+[
+  {
+    "entity_name": "John A. Doe",
+    "aliases": ["John Doe", "J Doe", "Jonathan Doe"],
+    "entity_type": "individual",
+    "countries": ["US"],
+    "source": "mock-ofac-style"
+  },
+  {
+    "entity_name": "Global Mule Holdings",
+    "aliases": ["GMH", "Global Mule Ltd", "Mule Hub LLC"],
+    "entity_type": "entity",
+    "countries": ["AE", "HK"],
+    "source": "mock-ofac-style"
+  },
+  {
+    "entity_name": "North Star Trading",
+    "aliases": ["NST", "NorthStar Trade", "North Star Trade LLC"],
+    "entity_type": "entity",
+    "countries": ["TR", "CY"],
+    "source": "mock-ofac-style"
+  }
+]

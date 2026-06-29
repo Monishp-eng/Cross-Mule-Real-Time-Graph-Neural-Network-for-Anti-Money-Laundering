@@ -1,0 +1,19 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "run-backend",
+			"type": "shell",
+			"command": "powershell -NoProfile -Command \"Set-Location 'c:\\Users\\Monish P\\Downloads\\Cross Mule Detection'; .\\.venv\\Scripts\\python.exe -m uvicorn src.api.server:app --host 127.0.0.1 --port 8000\"",
+			"isBackground": true,
+			"group": "build"
+		},
+		{
+			"label": "run-frontend",
+			"type": "shell",
+			"command": "powershell -NoProfile -Command \"Set-Location 'c:\\Users\\Monish P\\Downloads\\Cross Mule Detection\\frontend'; npm run dev -- --host 127.0.0.1\"",
+			"isBackground": true,
+			"group": "build"
+		}
+	]
+}

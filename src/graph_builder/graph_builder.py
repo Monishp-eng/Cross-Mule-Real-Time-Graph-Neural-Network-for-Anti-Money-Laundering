@@ -103,6 +103,17 @@ class GraphBuilder:
         self.neo4j_client = neo4j_client
         self.pending_queries = []
 
+    def _disable_neo4j(self, reason: str) -> None:
+        if self.neo4j_client is None:
+            return
+        logger.warning("Neo4j unavailable. Falling back to in-memory graph mode: %s", reason)
+        try:
+            if hasattr(self.neo4j_client, "close"):
+                self.neo4j_client.close()
+        except Exception:
+            pass
+        self.neo4j_client = None
+
     def _ingest_transaction_to_neo4j(self, normalized_txn: Dict[str, Any]) -> None:
         """Write transaction entities and relationships to Neo4j using a single parameterized query."""
         location_id = (
@@ -322,6 +333,7 @@ class GraphBuilder:
             
         except Exception as e:
             logger.error(f"Error ingesting transaction: {e}")
+            self._disable_neo4j(str(e))
             return False
 
     def get_connected_accounts(self, account_id: str, limit: int = 20) -> List[Dict[str, Any]]:
@@ -357,6 +369,7 @@ class GraphBuilder:
             return connected
         except Exception as exc:
             logger.warning(f"Could not fetch connected accounts for {account_id}: {exc}")
+            self._disable_neo4j(str(exc))
             return []
 
     def transaction_exists(self, txn_id: str) -> bool:
@@ -373,6 +386,7 @@ class GraphBuilder:
             return bool(rows and rows[0].get("exists"))
         except Exception as exc:
             logger.warning(f"Could not check transaction existence for {txn_id}: {exc}")
+            self._disable_neo4j(str(exc))
             return False
 
     def get_account_activity(self, account_id: str) -> Dict[str, Any]:
@@ -418,6 +432,7 @@ class GraphBuilder:
             }
         except Exception as exc:
             logger.warning(f"Could not fetch account activity for {account_id}: {exc}")
+            self._disable_neo4j(str(exc))
             return {
                 "txn_count_1h": 1,
                 "txn_count_24h": 1,
